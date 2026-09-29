@@ -1,0 +1,46 @@
+# feel free to add comments
+
+apiVersion: v1beta1
+kind: AgentConfig
+metadata:
+  name: {{ .Values.clustername }}
+{{ if .Values.rendezvousIP }}
+rendezvousIP: {{ .Values.rendezvousIP }}
+{{ end }}
+hosts:
+{{- range .Values.hosts }}
+  - hostname: {{ .name }}.{{ $.Values.domain }}
+    role: {{ .role | default "master" }}
+    interfaces:
+      {{- range .interfaces }}
+      - name: {{ .name | default $.Values.default_interface }}
+        macAddress: {{ .mac }}
+      {{- end }}
+    networkConfig:
+      interfaces:
+        {{- range .interfaces }}
+        - name: {{ .name | default $.Values.default_interface }}
+          type: ethernet
+          state: up
+          mac-address: {{ .mac }}
+          ipv4:
+            enabled: true
+            address:
+            - ip: {{ .ip }}
+              prefix-length: 23
+            dhcp: false
+        {{- end }}
+      dns-resolver:
+        config:
+          server:
+            {{- range $.Values.dns }}
+            - {{ . }}
+            {{- end }}
+      routes:
+        config:
+          - destination: 0.0.0.0/0
+            next-hop-address: {{ $.Values.next_hop_address }}
+            next-hop-interface: {{ (index .interfaces 0).name | default $.Values.default_interface }}
+            table-id: 254
+{{- end }}
+

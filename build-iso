@@ -1,0 +1,10 @@
+#!/bin/bash
+
+set -e
+DIRNAME=$(grep name Chart.yaml | grep -Eo '([^ ])+$')
+
+helm template . -f values-${1}.yaml --output-dir .
+openshift-install agent create image --dir="$DIRNAME/templates"
+mv "$DIRNAME/templates/agent.x86_64.iso" "$DIRNAME/${1}-agent.x86_64.iso"
+mv "agent_installer_iso/templates/agent.x86_64.iso" "agent_installer_iso/dev-agent.x86_64.iso"
+
